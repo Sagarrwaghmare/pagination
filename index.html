@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title></title>
+    <link rel='stylesheet' href='assets/water.css'>
+    <style>
+        body{
+            /* background-color:#333;
+            color:white; */
+        }
+    </style>
+</head>
+<body>
+
+    <header><h2>Pagination</h2></header>
+    <main>
+        <div class="totalRecords">
+            <select name="totalRecords" id="totalRecords">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+        <table>
+            <thead>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Email</th>
+            </thead>
+            <tbody style="">
+                
+            </tbody>
+
+        </table>
+        <div class="pagination-nav">
+        </div>
+    </main>
+
+
+
+    <script src='assets/jquery.js'></script>
+
+    <script>
+        $(document).ready(function () {
+            let arr = []
+            $.ajax({
+                'async': false,
+                'type': "GET",
+                'global': false,
+                'dataType': 'json',
+                'url': "data.json",
+                'data': {},
+                'success': function (data) {
+                    arr = data;
+                }
+            });
+
+
+            let TotalRecords = arr.length
+            let PerPage = 10
+            let Pages = Math.ceil(TotalRecords/PerPage)
+
+            let StartPage = 0
+            let EndPage = Pages - 1
+            let CurrentPageNo = 0
+            console.log(TotalRecords,PerPage,Pages,StartPage,EndPage);
+
+
+
+            
+            function displayPaginationBtns(){
+                $(".pagination-nav").html("");
+                    
+                // 1 first
+                if(CurrentPageNo != StartPage){
+
+                    if(CurrentPageNo != StartPage +1){
+                        $(".pagination-nav").append(`<button class="pagination-btns" id="firstPaginationBtn">First</button>`);
+                    }
+                
+                // 2 prev
+                    $(".pagination-nav").append(`<button class="pagination-btns" id="prevPaginationBtn">Prev</button>`);
+                }
+                
+                // 3 number
+                // first, last, middle
+                
+                for (let i = 0; i <= EndPage; i++) {
+
+                    let limit = 2
+                    let start = CurrentPageNo - limit
+                    let end = CurrentPageNo + limit
+                    
+                    if(i >= start && i <= end){
+                        $(".pagination-nav").append(`<button class="pagination-btns numberPaginationBtn" data-num="${i}">${i+1}</button>`);
+                    }
+                    
+                }
+
+                // next
+                if(CurrentPageNo != EndPage){
+                    $(".pagination-nav").append(`<button class="pagination-btns" id="nextPaginationBtn">Next</button>`);
+
+                // last
+                    if(CurrentPageNo != EndPage - 1){
+                        $(".pagination-nav").append(`<button class="pagination-btns" id="lastPaginationBtn">Last</button>`);
+                    }
+                }
+            }
+            
+            function displayRecords(){
+                $("tbody").html("");
+                let perpage = PerPage
+
+                
+                let pageStart = CurrentPageNo * perpage
+                let pageEnd = (CurrentPageNo * perpage) + perpage
+
+                if(CurrentPageNo < StartPage || CurrentPageNo > EndPage){
+                    return 0
+                }
+
+                $("tbody").html("");
+                for (let i = pageStart; i < pageEnd; i++) {
+
+                    if(arr.length > i){
+                        content = `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${arr[i].name}</td>
+                            <td>${arr[i].email}</td>
+                        </tr>`
+                        $("tbody").append(content);
+
+                    }
+                }     
+
+                
+
+                displayPaginationBtns()
+                
+                return 1
+            }
+
+        // pagination btns
+            $(".pagination-nav").on("click","#nextPaginationBtn",function (e) { 
+                e.preventDefault();
+                CurrentPageNo++
+                // console.log(CurrentPageNo);
+                displayRecords()
+            });
+            
+            $(".pagination-nav").on("click","#prevPaginationBtn",function (e) { 
+                e.preventDefault();
+                CurrentPageNo--
+                // console.log(CurrentPageNo);
+                displayRecords()
+            });
+
+            $(".pagination-nav").on("click","#lastPaginationBtn",function (e) { 
+                e.preventDefault();
+                CurrentPageNo = EndPage
+                // console.log(CurrentPageNo);
+                displayRecords()
+            });
+
+            
+            $(".pagination-nav").on("click","#firstPaginationBtn",function (e) { 
+                e.preventDefault();
+                CurrentPageNo = StartPage
+                // console.log(CurrentPageNo);
+                displayRecords()
+            });
+
+
+            $(".pagination-nav").on("click",".numberPaginationBtn",function (e) { 
+                e.preventDefault();
+                let dataNum = $(this).attr('data-num')
+                CurrentPageNo = Number(dataNum)
+                // console.log(CurrentPageNo);
+                displayRecords()
+            });
+        // pagination btns
+        
+
+        // select Per Page
+            $("#totalRecords").change(function (e) { 
+                e.preventDefault();
+                // alert($(this).val())
+                let offset = PerPage*CurrentPageNo
+
+                // Now PerPage Changes
+                PerPage = Number($(this).val())
+                
+                Pages = Math.ceil(TotalRecords/PerPage)
+                StartPage = 0
+                EndPage = Pages - 1
+
+
+                // Records Remains on Same Page even after Changing PerPage Records
+                // check for extreme cases.
+                let pageNoByOffset = Math.floor(offset / PerPage)
+                if(pageNoByOffset < EndPage){
+                    CurrentPageNo = pageNoByOffset
+                }else{
+                    CurrentPageNo = EndPage
+                }
+
+
+
+                displayRecords()
+            });
+
+            $('#totalRecords option[value='+PerPage+']').attr("selected", "selected");
+            displayRecords()
+
+        });
+    </script>
+</body>
+</html>
